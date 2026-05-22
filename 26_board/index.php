@@ -56,11 +56,16 @@ $result = mysqli_query($connection, $sql);
                     // 게시물 제목을 클릭하면 해당 게시물의 상세 페이지로 이동하도록 링크를 설정한다.
                     // view_post.php?id=1과 같이 게시물의 id를 URL에 전달하여 상세 페이지에서 해당 게시물을 조회할 수 있도록
                     // <a> 태그의 href 속성에 PHP 코드를 사용하여 게시물의 id를 동적으로 삽입한다.
+                    $id = $row['author_id']; // 게시물 작성자 이름을 표기하기 위함.
+                    $sql_user = "SELECT username FROM users WHERE id='$id'"; // 작성자 이름을 가져오기 위한 SQL 쿼리
+                    $result_user = mysqli_query($connection, $sql_user);
+                    $user = mysqli_fetch_assoc($result_user); // 작성자 이름을 가져온다
                     ?> <!-- 아래에서 HTML 구조로 게시물 제목을 출력하기 위해 PHP 태그를 닫는다. 참 기괴한 코드 구조야 -->
 
                     <a href="view_post.php?id=<?php echo $row['id']; ?>" >
                         <h2><?php echo $row['title']; ?></h2>
                     </a>
+                    <small>작성자: <?php echo $user['username']; ?> | 작성일: <?php echo $row['created_at']; ?></small>
                     <br><br>
 
                 <?php

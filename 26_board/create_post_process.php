@@ -18,14 +18,11 @@ $sql = "INSERT INTO posts (title, content, author_id) VALUES ('$title', '$conten
 $result = mysqli_query($connection, $sql);
 
 if ($result) {
-    if(!empty($file['tmp_name']) || $file['error'] == 0) { // 파일 업로드에 성공했는지 확인한다.
+    if(!empty($file['tmp_name']) && $file['error'] == 0) { // 파일 업로드에 성공했는지 확인한다.
         // mysqli_insert_id 함수는 마지막으로 삽입된 행의 ID를 반환한다. 새로 생성된 게시물의 ID를 가져온다.
         $post_id = mysqli_insert_id($connection);
 
-        $upload_dir = __DIR__ . '/uploads/'; // 파일이 저장될 디렉토리 경로를 지정한다.
-        if (!is_dir($upload_dir)) {
-            mkdir($upload_dir, 0777, true);
-        }
+        $upload_dir = 'uploads/'; // 파일이 저장될 디렉토리 경로를 지정한다.
         $original_name = $file['name']; // 업로드된 파일의 원래 이름
         $tmp_name = $file['tmp_name']; // 업로드된 파일이 임시로 저장된 경로
         $size = $file['size']; // 업로드된 파일의 크기

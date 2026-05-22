@@ -40,10 +40,7 @@ if(!empty($file['tmp_name']) && $file['error'] == 0) {
         mysqli_query($connection, "DELETE FROM attachments WHERE post_id='$post_id'"); // 기존 파일 정보 DB에서 삭제
     }
     
-    $upload_dir = __DIR__ . '/uploads/';
-    if(!is_dir($upload_dir)) {
-        mkdir($upload_dir, 0777, true);
-    }
+    $upload_dir = 'uploads/';
 
     $original_name = $file['name'];
     $size = $file['size'];

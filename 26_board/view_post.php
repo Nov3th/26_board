@@ -42,7 +42,7 @@ $post = mysqli_fetch_assoc($result);
         <?php
         // 해당 게시물에 첨부된 파일을 조회하는 SQL 쿼리
         $file_sql = "SELECT * FROM attachments WHERE post_id='$post_id'";
-        $file_result = mysqli_query($connection, $file_sql);
+        $file_result = mysqli_query($connection, $file_sql); //쿼리 결과 가져오기
 
         //첨부파일이 있는가
         if(mysqli_num_rows($file_result) > 0) {
@@ -52,21 +52,9 @@ $post = mysqli_fetch_assoc($result);
             while($file = mysqli_fetch_assoc($file_result)) {
                 $original_name = $file['original_name'];
                 $stored_path = $file['stored_path'];
-
-                // pathinfo 함수는 파일 경로에서 파일 이름, 확장자 등을 추출하는 데 사용된다.
-                // strtolower 함수는 문자열을 소문자로 변환하는 데 사용된다. 파일 확장자를 소문자로 변환하여 대소문자 구분 없이 처리할 수 있도록 한다.
-                $file_extension = strtolower(pathinfo($original_name, PATHINFO_EXTENSION)); // 파일의 확장자를 추출한다.
-                $image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']; // 인정할 이미지 파일 확장자 목록을 정의한다.
-                if(in_array($file_extension, $image_extensions)) { // 파일의 확장자가 이미지 파일 목록에 있는지 확인한다.
-                    // 이미지 파일인 경우 <img> 태그를 사용하여 이미지를 표시한다.
-                    // src 속성에는 업로드된 파일의 경로를 지정한다.
-                    // alt 속성에는 이미지가 표시되지 않을 때 대신 보여줄 텍스트를 지정한다.
-                    // style 속성에는 max-width: 300px;를 지정하여 이미지의 최대 너비를 300픽셀로 제한한다.
-                    echo "<img src='$stored_path' alt='$original_name' style='max-width: 300px;'><br>";
-                }else{
-                    //download 속성은 링크를 클릭할 때 파일을 다운로드하도록 지시하는 HTML5 속성.
-                    echo "<a href='$stored_path' download>$original_name</a><br>";
-                }
+                // download 속성은 링크를 클릭했을 때 파일을 다운로드하도록 브라우저에 지시한다.
+                // $original_name은 다운로드될 때의 파일 이름으로 사용된다.
+                echo "<a href='$stored_path' download>$original_name</a><br>";
             }
         }
         ?>
