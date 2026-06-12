@@ -41,12 +41,12 @@ if ($sort == "old") {
 if ($writer != ''){
 
     $writer = mysqli_real_escape_string($connection, $writer);
-    // posts.* : posts 테이블의 모든 컬럼
-    $sql = " SELECT posts.*
-    FROM posts
-    JOIN users ON posts.author_id = users.id
+    // guestbook_posts.* : guestbook_posts 테이블의 모든 컬럼
+    $sql = " SELECT guestbook_posts.*
+    FROM guestbook_posts
+    JOIN users ON guestbook_posts.author_id = users.id
     WHERE users.username = '$writer'
-    ORDER BY posts.created_at $order
+    ORDER BY guestbook_posts.created_at $order
     ";
 
     $result = mysqli_query($connection, $sql);
@@ -59,7 +59,7 @@ if ($writer != ''){
     // LIKE 연산자는 SQL에서 문자열 패턴 매칭을 수행하는 데 사용된다.
     // '%$search%'는 검색어가 포함된 모든 게시물을 찾기 위한 패턴이다.
     // '%'는 와일드카드로, 검색어 앞뒤에 어떤 문자든 올 수 있음을 의미한다.
-    $sql = "SELECT * FROM posts WHERE title LIKE '%$search%' ORDER BY created_at $order";
+    $sql = "SELECT * FROM guestbook_posts WHERE title LIKE '%$search%' ORDER BY created_at $order";
     // mysqli_num_rows 함수는 쿼리 결과의 행 수를 반환한다. 여기서는 검색 결과가 있는지 확인하는 데 사용된다.
     if (mysqli_num_rows(mysqli_query($connection, $sql)) == 0) { // 검색 결과가 없는 경우
         $message = '검색 결과가 없습니다.';
@@ -68,9 +68,9 @@ if ($writer != ''){
     }
 }else { // 검색어가 비어있는 경우, 모든 게시물을 가져온다.
 
-    // posts 테이블에서 모든 게시물을 created_at 컬럼을 기준으로 내림차순으로 가져오는 SQL 쿼리이다.
+    // guestbook_posts 테이블에서 모든 게시물을 created_at 컬럼을 기준으로 내림차순으로 가져오는 SQL 쿼리이다.
     // 최신 게시물이 먼저 나오도록 정렬한다.
-    $sql = "SELECT * FROM posts ORDER BY created_at $order";
+    $sql = "SELECT * FROM guestbook_posts ORDER BY created_at $order";
     $result = mysqli_query($connection, $sql);
 }
 ?>
@@ -79,12 +79,12 @@ if ($writer != ''){
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>자유 게시판</title>
+        <title>방명록 게시판</title>
     </head>
     <body>
         <p><a href="lobby.php">로비로 이동</a></p>
 
-        <h1>자유 게시판</h1>
+        <h1>방명록 게시판</h1>
         
         <?php echo "안녕하세요, " . $_SESSION['username'] . "님!"; ?>
 
@@ -94,29 +94,29 @@ if ($writer != ''){
 
         <br><br>
         <!-- <a> 태그는 하이퍼링크를 생성하는 데 사용된다.
-            여기서는 '글쓰기'라는 텍스트를 클릭하면 create_post.php로 이동한다. -->
-        <a href="create_post.php">글쓰기</a>
+            여기서는 '글쓰기'라는 텍스트를 클릭하면 guestbook_create_post.php로 이동한다. -->
+        <a href="guestbook_create_post.php">글쓰기</a>
         <hr>  <!-- <hr> 태그는 수평선을 그리는 데 사용된다. 여기서는 게시판 제목과 게시물 목록을 구분하는 역할을 한다. -->
         <!-- 게시물 검색을 위한 입력 필드이다. 사용자가 검색어를 입력할 수 있도록 한다. -->
          <!-- <input> 태그는 사용자로부터 입력을 받을 수 있는 필드를 생성하는 데 사용된다.
               type="text"은 텍스트 입력 필드를 나타내며, id="searchInput"은 자바스크립트나 CSS에서 이 요소를 참조할 때 사용할 수 있는 고유한 식별자이다.
               placeholder="검색"은 입력 필드에 회색으로 표시되는 안내 텍스트로, 사용자가 무엇을 입력해야 하는지 알려준다. -->
-        <form method="GET" action="index.php">
+        <form method="GET" action="guestbook_index.php">
             <input type="text" name="search" id="searchInput" placeholder="게시글 검색">
             <button id="searchButton">검색</button>
         </form>
-        <form method="GET" action="index.php">
+        <form method="GET" action="guestbook_index.php">
             <input type="text" name="user_search" placeholder="유저 검색">
             <button type="submit">유저 검색</button>
         </form>
         <br>
-        <a href="index.php?writer=<?php echo $writer; ?>&sort=new">
+        <a href="guestbook_index.php?writer=<?php echo $writer; ?>&sort=new">
             최신순
         </a>
-        <a href="index.php?writer=<?php echo $writer; ?>&sort=old">
+        <a href="guestbook_index.php?writer=<?php echo $writer; ?>&sort=old">
             오래된순
         </a>
-        <a href="index.php">전체 글 보기</a>
+        <a href="guestbook_index.php">전체 글 보기</a>
         <br><br>
 
         <?php
@@ -127,7 +127,7 @@ if ($writer != ''){
 
                 while ($user_row = mysqli_fetch_assoc($user_result)) {
             ?>
-                    <a href="index.php?writer=<?php echo $user_row['username']; ?>">
+                    <a href="guestbook_index.php?writer=<?php echo $user_row['username']; ?>">
                         <?php echo $user_row['username']; ?>
                     </a>
                     <br>
@@ -166,7 +166,7 @@ if ($writer != ''){
                     $user = mysqli_fetch_assoc($result_user); // 작성자 이름을 가져온다
                     ?> <!-- 아래에서 HTML 구조로 게시물 제목을 출력하기 위해 PHP 태그를 닫는다. 참 기괴한 코드 구조야 -->
 
-                    <a href="view_post.php?id=<?php echo $row['id']; ?>" >
+                    <a href="guestbook_view_post.php?id=<?php echo $row['id']; ?>" >
                         <h2><?php echo $row['title']; ?></h2>
                     </a>
                     <small>작성자: <?php echo $user['username']; ?> | 작성일: <?php echo $row['created_at']; ?></small>

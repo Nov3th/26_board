@@ -29,7 +29,7 @@ if (mysqli_num_rows($result) > 0) {
     //header 함수는 HTTP 헤더를 전송하는 데 사용함.
     //이 경우, "Location: index.php"는 클라이언트에게 index.php로 이동하도록 지시한다.
     // 따라서 로그인 성공 시 사용자는 자동으로 index.php로 리디렉션된다.
-    header("Location: index.php"); // 로그인 성공 시 index.php로 강제 이동
+    header("Location: lobby.php"); // 로그인 성공 시 lobby.php로 강제 이동
     exit(); // 현재 스크립트 실행을 종료. header 함수로 리디렉션 후 스크립트가 계속 실행되는 것을 방지하기 위해 사용된다.
 } else {
     echo "아이디 또는 비밀번호가 잘못되었습니다.";

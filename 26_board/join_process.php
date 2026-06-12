@@ -22,8 +22,8 @@ if (mysqli_query($connection, $sql)) {
     // alert() 함수는 사용자에게 메시지를 표시하는 데 사용된다. 여기서는 '회원가입이 완료되었습니다.'라는 메시지를 표시한다.
     // ;는 JavaScript에서 명령어의 끝을 나타내는 구분자이다. 여러 명령어를 한 줄에 작성할 때 사용된다.
     // window.location.href는 현재 페이지를 다른 URL로 이동시키는 데 사용된다.
-    // 여기서는 회원가입이 완료된 후 index.php로 이동하도록 설정되어 있다.
-    echo "<script>alert('회원가입이 완료되었습니다.'); window.location.href='index.php';</script>"; // 회원가입 성공 시 index.php로 이동
+    // 여기서는 회원가입이 완료된 후 lobby.php로 이동하도록 설정되어 있다.
+    echo "<script>alert('회원가입이 완료되었습니다.'); window.location.href='lobby.php';</script>"; // 회원가입 성공 시 lobby.php로 이동
 } else {
     echo "오류가 발생했습니다.";
 }
