@@ -11,7 +11,11 @@ $password = $_POST['password'];
 $sql = "INSERT INTO users (username, password) VALUES ('$username', '$password')";
 
 if (mysqli_query($connection, $sql)) {
+    //mysqli_insert_id는 방금 INSERT된 레코드의 AUTO_INCREMENT id를 반환한다
+    $user_id = mysqli_insert_id($connection);
+
     $_SESSION['username'] = $username; // 회원가입 후 자동 로그인용 세션 설정
+    $_SESSION['user_id'] = $user_id;
 
     // <script> 태그는 클라이언트 측에서 JavaScript 코드를 실행하는 데 사용된다.
     // javaScript는 웹 페이지에 동적인 기능을 추가하는 데 사용되는 프로그래밍 언어이다. 움직임과 기능 담당. 두뇌, 근육, 신경망

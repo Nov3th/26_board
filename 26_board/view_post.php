@@ -24,6 +24,11 @@ $post = mysqli_fetch_assoc($result);
 //     'created_at' => '2026-05-21'
 // ]; 이런식으로 저장되어 있다고 한다?
 
+$id = $post['author_id']; // 게시물 작성자 이름을 표기하기 위함.
+$sql_user = "SELECT username FROM users WHERE id='$id'"; // 작성자 이름을 가져오기 위한 SQL 쿼리
+$result_user = mysqli_query($connection, $sql_user);
+$user = mysqli_fetch_assoc($result_user); // 작성자 이름을 가져온다
+
 ?>
 
 <!DOCTYPE html>
@@ -35,7 +40,13 @@ $post = mysqli_fetch_assoc($result);
     <body>
         <a href="index.php">목록으로 돌아가기</a> <!-- 게시물 상세보기 페이지에서 게시물 목록 페이지로 돌아가는 링크를 제공한다. -->
         <h1><?php echo $post['title']; ?></h1> <!-- 게시물의 제목을 출력한다. -->
-        <small>작성자: <?php echo $post['author_id']; ?> | 작성일: <?php echo $post['created_at']; ?></small> <!-- 게시물의 작성자와 작성일을 작은 글씨로 출력한다. -->
+        <small> <!-- 게시물의 작성자와 작성일을 작은 글씨로 출력한다. -->
+            작성자:
+            <a href="index.php?writer=<?php echo $user['username']; ?>">
+                <?php echo $user['username']; ?>
+            </a>
+            | 작성일: <?php echo $post['created_at']; ?>
+        </small>
         <p><?php echo $post['content']; ?></p> <!-- 게시물의 내용을 출력한다. -->
         <br><br>
 
