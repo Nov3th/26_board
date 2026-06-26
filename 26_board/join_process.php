@@ -5,12 +5,72 @@ session_start(); // 회원가입 후 자동 로그인 및 index.php로 이동을
 // db.php 파일 안에 있던 코드가 이 자리에 그대로 이식됨. 그래서 $connection 변수가 이 파일에서도 사용 가능하게 됨.
 include 'db.php';
 
-$username = $_POST['username'];
+$username = trim($_POST['username']);
 $password = $_POST['password'];
 
-$sql = "INSERT INTO users (username, password) VALUES ('$username', '$password')";
+// =========================
+// 1. 입력값 검사
+// =========================
 
-if (mysqli_query($connection, $sql)) {
+// 빈 값 검사
+if (empty($username) || empty($password)) {
+    die("아이디와 비밀번호를 모두 입력해주세요.");
+}
+
+// 아이디는 영문과 숫자만 허용 (4~20자)
+if (!preg_match('/^[a-zA-Z0-9]{4,20}$/', $username)) {
+    die("아이디는 영문과 숫자만 사용할 수 있으며 4~20자여야 합니다.");
+}
+
+// 비밀번호는 최소 8자
+if (strlen($password) < 8) {
+    die("비밀번호는 8자 이상이어야 합니다.");
+}
+
+// =========================
+// 2. 아이디 중복 확인
+// =========================
+
+$stmt = mysqli_prepare(
+    $connection,
+    "SELECT id FROM users WHERE username=?"
+);
+
+mysqli_stmt_bind_param($stmt, "s", $username);
+mysqli_stmt_execute($stmt);
+
+$result = mysqli_stmt_get_result($stmt);
+
+if (mysqli_fetch_assoc($result)) {
+    mysqli_stmt_close($stmt);
+    die("이미 존재하는 아이디입니다.");
+}
+
+mysqli_stmt_close($stmt);
+
+// =========================
+// 3. 비밀번호 해싱
+// =========================
+
+// 비밀번호 해싱
+$hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+if ($hashedPassword === false) {
+    die("비밀번호 암호화에 실패했습니다.");
+}
+
+// =========================
+// 4. 회원가입
+// =========================
+
+// Prepared Statement
+$stmt = mysqli_prepare(
+    $connection,
+    "INSERT INTO users (username, password) VALUES (?, ?)"
+);
+
+mysqli_stmt_bind_param($stmt, "ss", $username, $hashedPassword);
+
+if (mysqli_stmt_execute($stmt)) {
     //mysqli_insert_id는 방금 INSERT된 레코드의 AUTO_INCREMENT id를 반환한다
     $user_id = mysqli_insert_id($connection);
 
@@ -25,7 +85,14 @@ if (mysqli_query($connection, $sql)) {
     // 여기서는 회원가입이 완료된 후 lobby.php로 이동하도록 설정되어 있다.
     echo "<script>alert('회원가입이 완료되었습니다.'); window.location.href='lobby.php';</script>"; // 회원가입 성공 시 lobby.php로 이동
 } else {
-    echo "오류가 발생했습니다.";
+    echo "회원가입에 실패했습니다.";
 }
+
+// =========================
+// 5. 자원 정리
+// =========================
+
+mysqli_stmt_close($stmt);
+mysqli_close($connection);
 
 ?>
