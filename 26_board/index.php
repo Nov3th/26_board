@@ -10,6 +10,8 @@ if (!isset($_SESSION['username'])){
     exit();
 }
 
+$message = '';
+
 // 검색어를 GET 방식으로 받아온다. 검색어가 없으면 빈 문자열로 초기화한다.
 $search = $_GET['search'] ?? ''; //게시글 검색
 $user_search = $_GET['user_search'] ?? ''; //유저 검색
@@ -18,13 +20,29 @@ $user_result = null;
 
 if ($user_search != '') {
 
-    $user_search = mysqli_real_escape_string($connection, $user_search);
+    // $user_search = mysqli_real_escape_string($connection, $user_search);
 
-    $sql_user_search ="SELECT username
-                        FROM users
-                        WHERE username LIKE '%$user_search%'
-                        ORDER BY username";
-    $user_result = mysqli_query($connection, $sql_user_search);
+    // $sql_user_search ="SELECT username
+    //                     FROM users
+    //                     WHERE username LIKE '%$user_search%'
+    //                     ORDER BY username";
+    // $user_result = mysqli_query($connection, $sql_user_search);
+    $stmt = mysqli_prepare(
+        $connection,
+        "SELECT username
+        FROM users
+        WHERE username LIKE ?
+        ORDER BY username"
+    );
+
+    $keyword = "%{$user_search}%";
+
+    mysqli_stmt_bind_param($stmt, "s", $keyword);
+    mysqli_stmt_execute($stmt);
+
+    $user_result = mysqli_stmt_get_result($stmt);
+
+    mysqli_stmt_close($stmt);
 }
 
 // writer 가져오기
@@ -40,32 +58,68 @@ if ($sort == "old") {
 
 if ($writer != ''){
 
-    $writer = mysqli_real_escape_string($connection, $writer);
-    // posts.* : posts 테이블의 모든 컬럼
-    $sql = " SELECT posts.*
-    FROM posts
-    JOIN users ON posts.author_id = users.id
-    WHERE users.username = '$writer'
-    ORDER BY posts.created_at $order
-    ";
+    // $writer = mysqli_real_escape_string($connection, $writer);
+    // // posts.* : posts 테이블의 모든 컬럼
+    // $sql = " SELECT posts.*
+    // FROM posts
+    // JOIN users ON posts.author_id = users.id
+    // WHERE users.username = '$writer'
+    // ORDER BY posts.created_at $order
+    // ";
 
-    $result = mysqli_query($connection, $sql);
+    // $result = mysqli_query($connection, $sql);
+    $stmt = mysqli_prepare(
+        $connection,
+        "SELECT posts.*
+        FROM posts
+        JOIN users ON posts.author_id = users.id
+        WHERE users.username=?
+        ORDER BY posts.created_at $order"
+    );
+
+    mysqli_stmt_bind_param($stmt, "s", $writer);
+    mysqli_stmt_execute($stmt);
+
+    $result = mysqli_stmt_get_result($stmt);
+
+    mysqli_stmt_close($stmt);
 
 }else if ($search != '') { // 검색어가 비어있지 않은 경우에만 검색을 수행한다.
 
     // mysqli_real_escape_string 함수는 SQL 인젝션 공격을 방지하기 위해 사용된다.
     // 이 함수는 검색어에서 특수 문자를 이스케이프 처리하여 안전하게 SQL 쿼리에 사용할 수 있도록 한다.
-    $search = mysqli_real_escape_string($connection, $search);
+    // $search = mysqli_real_escape_string($connection, $search);
     // LIKE 연산자는 SQL에서 문자열 패턴 매칭을 수행하는 데 사용된다.
     // '%$search%'는 검색어가 포함된 모든 게시물을 찾기 위한 패턴이다.
     // '%'는 와일드카드로, 검색어 앞뒤에 어떤 문자든 올 수 있음을 의미한다.
-    $sql = "SELECT * FROM posts WHERE title LIKE '%$search%' ORDER BY created_at $order";
+    // $sql = "SELECT * FROM posts WHERE title LIKE '%$search%' ORDER BY created_at $order";
+    $stmt = mysqli_prepare(
+        $connection,
+        "SELECT *
+        FROM posts
+        WHERE title LIKE ?
+        ORDER BY created_at $order"
+    );
+
+    $keyword = "%{$search}%";
+
+    mysqli_stmt_bind_param($stmt, "s", $keyword);
+    mysqli_stmt_execute($stmt);
+
+    $result = mysqli_stmt_get_result($stmt);
+    
     // mysqli_num_rows 함수는 쿼리 결과의 행 수를 반환한다. 여기서는 검색 결과가 있는지 확인하는 데 사용된다.
-    if (mysqli_num_rows(mysqli_query($connection, $sql)) == 0) { // 검색 결과가 없는 경우
+    // if (mysqli_num_rows(mysqli_query($connection, $sql)) == 0) { // 검색 결과가 없는 경우
+    // if (mysqli_num_rows($result) == 0) {
+    //     $message = '검색 결과가 없습니다.';
+    // } else {
+    //     $result = mysqli_query($connection, $sql);
+    // }
+    if (mysqli_num_rows($result) == 0) {
         $message = '검색 결과가 없습니다.';
-    } else {
-        $result = mysqli_query($connection, $sql);
     }
+
+    mysqli_stmt_close($stmt);
 }else { // 검색어가 비어있는 경우, 모든 게시물을 가져온다.
 
     // posts 테이블에서 모든 게시물을 created_at 컬럼을 기준으로 내림차순으로 가져오는 SQL 쿼리이다.
@@ -86,7 +140,7 @@ if ($writer != ''){
 
         <h1>자유 게시판</h1>
         
-        <?php echo "안녕하세요, " . $_SESSION['username'] . "님!"; ?>
+        <?php echo "안녕하세요, " . htmlspecialchars($_SESSION['username']) . "님!"; ?>
 
         <br><br>
 
@@ -110,10 +164,10 @@ if ($writer != ''){
             <button type="submit">유저 검색</button>
         </form>
         <br>
-        <a href="index.php?writer=<?php echo $writer; ?>&sort=new">
+        <a href="index.php?writer=<?php echo urlencode($writer); ?>&sort=new">
             최신순
         </a>
-        <a href="index.php?writer=<?php echo $writer; ?>&sort=old">
+        <a href="index.php?writer=<?php echo urlencode($writer); ?>&sort=old">
             오래된순
         </a>
         <a href="index.php">전체 글 보기</a>
@@ -127,7 +181,7 @@ if ($writer != ''){
 
                 while ($user_row = mysqli_fetch_assoc($user_result)) {
             ?>
-                    <a href="index.php?writer=<?php echo $user_row['username']; ?>">
+                    <a href="index.php?writer=<?php echo urlencode($user_row['username']); ?>">
                         <?php echo $user_row['username']; ?>
                     </a>
                     <br>
@@ -160,16 +214,29 @@ if ($writer != ''){
                     // 게시물 제목을 클릭하면 해당 게시물의 상세 페이지로 이동하도록 링크를 설정한다.
                     // view_post.php?id=1과 같이 게시물의 id를 URL에 전달하여 상세 페이지에서 해당 게시물을 조회할 수 있도록
                     // <a> 태그의 href 속성에 PHP 코드를 사용하여 게시물의 id를 동적으로 삽입한다.
+
                     $id = $row['author_id']; // 게시물 작성자 이름을 표기하기 위함.
-                    $sql_user = "SELECT username FROM users WHERE id='$id'"; // 작성자 이름을 가져오기 위한 SQL 쿼리
-                    $result_user = mysqli_query($connection, $sql_user);
-                    $user = mysqli_fetch_assoc($result_user); // 작성자 이름을 가져온다
+                    // $sql_user = "SELECT username FROM users WHERE id='$id'"; // 작성자 이름을 가져오기 위한 SQL 쿼리
+                    // $result_user = mysqli_query($connection, $sql_user);
+                    // $user = mysqli_fetch_assoc($result_user); // 작성자 이름을 가져온다
+                    $stmt = mysqli_prepare(
+                        $connection,
+                        "SELECT username FROM users WHERE id=?"
+                    );
+
+                    mysqli_stmt_bind_param($stmt, "i", $id);
+                    mysqli_stmt_execute($stmt);
+
+                    $result_user = mysqli_stmt_get_result($stmt);
+                    $user = mysqli_fetch_assoc($result_user);
+
+                    mysqli_stmt_close($stmt);
                     ?> <!-- 아래에서 HTML 구조로 게시물 제목을 출력하기 위해 PHP 태그를 닫는다. 참 기괴한 코드 구조야 -->
 
                     <a href="view_post.php?id=<?php echo $row['id']; ?>" >
-                        <h2><?php echo $row['title']; ?></h2>
+                        <h2><?php echo htmlspecialchars($row['title']); ?></h2>
                     </a>
-                    <small>작성자: <?php echo $user['username']; ?> | 작성일: <?php echo $row['created_at']; ?></small>
+                    <small>작성자: <?php echo htmlspecialchars($user['username']); ?> | 작성일: <?php echo $row['created_at']; ?></small>
                     <br><br>
                     
                 <?php
