@@ -29,7 +29,30 @@ if (!isset($_SESSION['username'])){
             <textarea id="content" name="content"></textarea><br><br>
 
             <label for="file">파일:</label>
-            <input type="file" id="file" name="upload_file"><br><br>
+            <!-- <input type="file" id="file" name="upload_file"><br><br> -->
+            <div id="upload-area">
+                <input type="file" name="upload_file[]">
+            </div>
+
+            <button type="button" onclick="addFile()">파일 추가</button>
+
+            <br><br>
+
+            <script>
+            function addFile() {
+
+                const area = document.getElementById("upload-area");
+
+                area.appendChild(document.createElement("br"));
+
+                const input = document.createElement("input");
+
+                input.type = "file";
+                input.name = "upload_file[]";
+
+                area.appendChild(input);
+            }
+            </script>
 
             <input type="submit" value="글쓰기">
         </form>

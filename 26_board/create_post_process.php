@@ -65,16 +65,113 @@ mysqli_stmt_close($stmt);
 // 3. 파일 업로드
 // =========================
 
-if (!empty($file['tmp_name']) && $file['error'] == 0) {
+// if (!empty($file['tmp_name']) && $file['error'] == 0) {
     
-    $upload_dir = "uploads/";
-    if (!is_dir($upload_dir)) {
-        mkdir($upload_dir, 0755, true);
+//     $upload_dir = "uploads/";
+//     if (!is_dir($upload_dir)) {
+//         mkdir($upload_dir, 0755, true);
+//     }
+
+//     $original_name = basename($file['name']);
+//     $tmp_name = $file['tmp_name'];
+//     $size = $file['size'];
+
+//     // 최대 5MB
+//     $maxSize = 5 * 1024 * 1024;
+
+//     if ($size > $maxSize) {
+//         die("파일은 5MB 이하만 업로드할 수 있습니다.");
+//     }
+
+//     // 확장자 검사
+//     $ext = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
+
+//     $allowedExt = [
+//         'jpg',
+//         'jpeg',
+//         'png',
+//         'gif',
+//         'pdf'
+//     ];
+
+//     if (!in_array($ext, $allowedExt)) {
+//         die("허용되지 않는 파일 확장자입니다.");
+//     }
+
+//     // MIME 타입 검사
+//     $finfo = finfo_open(FILEINFO_MIME_TYPE);
+//     $mime = finfo_file($finfo, $tmp_name);
+//     finfo_close($finfo);
+
+//     $allowedMime = [
+//         'image/jpeg',
+//         'image/png',
+//         'image/gif',
+//         'application/pdf'
+//     ];
+
+//     if (!in_array($mime, $allowedMime)) {
+//         die("허용되지 않는 파일 형식입니다.");
+//     }
+
+//     if ($ext !== "pdf") {
+//         if (getimagesize($tmp_name) === false) {
+//             die("이미지 파일이 아닙니다.");
+//         }
+//     }
+
+//     // 랜덤 파일명 생성
+//     $stored_name = bin2hex(random_bytes(16)) . "." . $ext;
+//     $stored_path = $upload_dir . $stored_name;
+
+//     if (move_uploaded_file($tmp_name, $stored_path)) {
+
+//         $stmt = mysqli_prepare(
+//             $connection,
+//             "INSERT INTO attachments
+//             (post_id, original_name, stored_path, size_bytes)
+//             VALUES (?, ?, ?, ?)"
+//         );
+
+//         mysqli_stmt_bind_param(
+//             $stmt,
+//             "issi",
+//             $post_id,
+//             $original_name,
+//             $stored_path,
+//             $size
+//         );
+
+//         if (!mysqli_stmt_execute($stmt)) {
+//             die("첨부파일 정보를 저장하지 못했습니다.");
+//         }
+//         mysqli_stmt_close($stmt);
+//     }else{
+//         die("파일 업로드에 실패했습니다.");
+//     }
+// }
+
+$upload_dir = "uploads/";
+
+if (!is_dir($upload_dir)) {
+    mkdir($upload_dir, 0755, true);
+}
+
+foreach ($file['name'] as $i => $original_name) {
+
+    // 파일을 선택하지 않은 칸은 건너뛴다.
+    if ($file['error'][$i] == UPLOAD_ERR_NO_FILE) {
+        continue;
     }
 
-    $original_name = basename($file['name']);
-    $tmp_name = $file['tmp_name'];
-    $size = $file['size'];
+    // 업로드 중 오류 발생
+    if ($file['error'][$i] != UPLOAD_ERR_OK) {
+        die("파일 업로드 중 오류가 발생했습니다.");
+    }
+
+    $original_name = basename($original_name);
+    $tmp_name = $file['tmp_name'][$i];
+    $size = $file['size'][$i];
 
     // 최대 5MB
     $maxSize = 5 * 1024 * 1024;
@@ -98,7 +195,7 @@ if (!empty($file['tmp_name']) && $file['error'] == 0) {
         die("허용되지 않는 파일 확장자입니다.");
     }
 
-    // MIME 타입 검사
+    // MIME 검사
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
     $mime = finfo_file($finfo, $tmp_name);
     finfo_close($finfo);
@@ -114,7 +211,9 @@ if (!empty($file['tmp_name']) && $file['error'] == 0) {
         die("허용되지 않는 파일 형식입니다.");
     }
 
+    // 이미지 검사
     if ($ext !== "pdf") {
+
         if (getimagesize($tmp_name) === false) {
             die("이미지 파일이 아닙니다.");
         }
@@ -124,31 +223,33 @@ if (!empty($file['tmp_name']) && $file['error'] == 0) {
     $stored_name = bin2hex(random_bytes(16)) . "." . $ext;
     $stored_path = $upload_dir . $stored_name;
 
-    if (move_uploaded_file($tmp_name, $stored_path)) {
-
-        $stmt = mysqli_prepare(
-            $connection,
-            "INSERT INTO attachments
-            (post_id, original_name, stored_path, size_bytes)
-            VALUES (?, ?, ?, ?)"
-        );
-
-        mysqli_stmt_bind_param(
-            $stmt,
-            "issi",
-            $post_id,
-            $original_name,
-            $stored_path,
-            $size
-        );
-
-        if (!mysqli_stmt_execute($stmt)) {
-            die("첨부파일 정보를 저장하지 못했습니다.");
-        }
-        mysqli_stmt_close($stmt);
-    }else{
+    // 실제 업로드
+    if (!move_uploaded_file($tmp_name, $stored_path)) {
         die("파일 업로드에 실패했습니다.");
     }
+
+    // DB 저장
+    $stmt = mysqli_prepare(
+        $connection,
+        "INSERT INTO attachments
+        (post_id, original_name, stored_path, size_bytes)
+        VALUES (?, ?, ?, ?)"
+    );
+
+    mysqli_stmt_bind_param(
+        $stmt,
+        "issi",
+        $post_id,
+        $original_name,
+        $stored_path,
+        $size
+    );
+
+    if (!mysqli_stmt_execute($stmt)) {
+        die("첨부파일 정보를 저장하지 못했습니다.");
+    }
+
+    mysqli_stmt_close($stmt);
 }
 
 // =========================
